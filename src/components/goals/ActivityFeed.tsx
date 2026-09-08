@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { Avatar } from "@/components/ui/Avatar";
@@ -10,6 +10,7 @@ import { formatMoney } from "@/lib/savings/money";
 import type { Contribution } from "@/lib/supabase/types";
 
 const QUICK_EMOJIS = ["🔥", "👏", "💪", "🎉"];
+const PAGE = 20;
 
 const KIND_LABEL: Record<string, string> = {
   daily: "Cuota del día",
@@ -32,6 +33,8 @@ export function ActivityFeed({
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  // El feed puede crecer a cientos de abonos; se muestra por tandas.
+  const [limit, setLimit] = useState(PAGE);
 
   if (contributions.length === 0) {
     return (
@@ -48,7 +51,7 @@ export function ActivityFeed({
     <section className="card p-4">
       <h2 className="mb-3 text-sm font-medium">Actividad</h2>
       <ol className="space-y-4">
-        {contributions.map((c) => {
+        {contributions.slice(0, limit).map((c) => {
           const grouped = groupReactions(c.reactions ?? []);
           return (
             <li key={c.id} className="flex gap-3">
@@ -131,6 +134,15 @@ export function ActivityFeed({
           );
         })}
       </ol>
+
+      {contributions.length > limit && (
+        <button
+          onClick={() => setLimit((l) => l + PAGE)}
+          className="mt-4 w-full rounded-xl border border-ink-700 py-2.5 text-sm text-ink-300 transition active:scale-[0.99]"
+        >
+          Ver {Math.min(PAGE, contributions.length - limit)} abonos más
+        </button>
+      )}
     </section>
   );
 }

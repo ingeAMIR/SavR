@@ -68,7 +68,10 @@ export function GoalCard({ goal, currency }: { goal: GoalVM; currency: string })
             <span>
               {goal.daysContributed} días abonados
               {goal.daysMissed > 0 && (
-                <span className="text-amber-warm"> · {goal.daysMissed} atrasados</span>
+                <span className="text-amber-warm">
+                  {" "}
+                  · {goal.daysMissed} {goal.daysMissed === 1 ? "atrasado" : "atrasados"}
+                </span>
               )}
             </span>
           </div>
@@ -78,12 +81,20 @@ export function GoalCard({ goal, currency }: { goal: GoalVM; currency: string })
               Atraso acumulado: {formatMoney(goal.myArrears, currency)}
             </p>
           )}
-          {goal.myBufferDays > 0 && (
-            <p className="text-[11px] text-mint-400">
-              Buffer: {goal.myBufferDays} {goal.myBufferDays === 1 ? "día pagado" : "días pagados"}{" "}
-              por adelantado
-            </p>
-          )}
+          {goal.myBufferDays > 0 &&
+            (goal.surplusMode === "buffer" ? (
+              <p className="text-[11px] text-mint-400">
+                Buffer: {goal.myBufferDays}{" "}
+                {goal.myBufferDays === 1 ? "día pagado" : "días pagados"} por adelantado
+              </p>
+            ) : (
+              goal.projectedDaysDelta > 0 && (
+                <p className="text-[11px] text-mint-400">
+                  Terminas {goal.projectedDaysDelta}{" "}
+                  {goal.projectedDaysDelta === 1 ? "día antes" : "días antes"} sin bajar la cuota
+                </p>
+              )
+            ))}
         </div>
       </Link>
 
