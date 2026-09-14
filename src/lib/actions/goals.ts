@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getGoalBundles, getProfile } from "@/lib/data/queries";
 import { computeGoalState } from "@/lib/savings/engine";
 import { todayISO } from "@/lib/savings/dates";
-import type { ContributionKind, SurplusMode } from "@/lib/supabase/types";
+import type { ContributionFrequency, ContributionKind, SurplusMode } from "@/lib/supabase/types";
 
 export interface ActionResult {
   ok: boolean;
@@ -33,6 +33,7 @@ export async function createGoal(input: {
   imageUrl?: string | null;
   surplusMode?: SurplusMode;
   roundingStep?: number;
+  contributionFrequency?: ContributionFrequency;
 }): Promise<ActionResult> {
   const { supabase, user } = await requireUser();
 
@@ -51,6 +52,7 @@ export async function createGoal(input: {
       image_url: input.imageUrl ?? null,
       surplus_mode: input.surplusMode ?? "buffer",
       rounding_step: Math.max(0, Math.round(input.roundingStep ?? 0)),
+      contribution_frequency: input.contributionFrequency ?? "daily",
     })
     .select("id")
     .single();
@@ -69,6 +71,7 @@ export async function updateGoal(
     image_url: string | null;
     surplus_mode: SurplusMode;
     rounding_step: number;
+    contribution_frequency: ContributionFrequency;
     status: "active" | "paused" | "completed" | "archived";
     purchased_at: string | null;
   }>,
@@ -114,7 +117,6 @@ export async function addContribution(input: {
   });
   if (error) return { ok: false, error: error.message };
 
-  await maybeCompleteGoal(input.goalId);
   revalidatePath("/");
   revalidatePath(`/goals/${input.goalId}`);
   return { ok: true };
@@ -175,27 +177,6 @@ export async function payAllDailyQuotas(): Promise<ActionResult> {
   const { error } = await supabase.from("contributions").insert(rows);
   if (error) return { ok: false, error: error.message };
 
-  for (const r of rows) await maybeCompleteGoal(r.goal_id);
   revalidatePath("/");
   return { ok: true, data: rows.length };
-}
-
-/** Marca la meta como completada cuando el total ahorrado alcanza el objetivo. */
-async function maybeCompleteGoal(goalId: string) {
-  const supabase = await createClient();
-  const { data: goal } = await supabase
-    .from("goals")
-    .select("id, target_amount, status")
-    .eq("id", goalId)
-    .maybeSingle();
-  if (!goal || goal.status === "completed") return;
-
-  const { data: sums } = await supabase.from("contributions").select("amount").eq("goal_id", goalId);
-  const total = (sums ?? []).reduce((s, c) => s + (c.amount as number), 0);
-  if (total >= goal.target_amount) {
-    await supabase
-      .from("goals")
-      .update({ status: "completed", completed_at: new Date().toISOString() })
-      .eq("id", goalId);
-  }
 }

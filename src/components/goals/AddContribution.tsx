@@ -7,6 +7,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { Field, inputClass } from "@/components/ui/Field";
 import { addContribution } from "@/lib/actions/goals";
 import { formatMoney, parseMoney } from "@/lib/savings/money";
+import { frequencyLabel } from "@/lib/savings/frequency";
 import type { GoalVM } from "@/lib/data/viewmodel";
 
 export function AddContribution({ goal, currency }: { goal: GoalVM; currency: string }) {
@@ -70,6 +71,13 @@ export function AddContribution({ goal, currency }: { goal: GoalVM; currency: st
             ? "Registrando…"
             : `Abonar cuota de hoy · ${formatMoney(goal.myTodayCharge, currency)}`}
       </button>
+
+      {goal.contributionFrequency !== "daily" && (
+        <p className="text-center text-xs text-ink-400">
+          Abonos {frequencyLabel(goal.contributionFrequency).toLowerCase()} · ≈{" "}
+          {formatMoney(goal.myPeriodicQuota, currency)} por periodo
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         {goal.myArrears > 0 && (
