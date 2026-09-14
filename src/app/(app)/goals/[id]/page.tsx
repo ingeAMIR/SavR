@@ -14,10 +14,8 @@ export const dynamic = "force-dynamic";
 
 export default async function GoalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const profile = await getProfile();
+  const [profile, bundle] = await Promise.all([getProfile(), getGoalBundle(id)]);
   if (!profile) return null;
-
-  const bundle = await getGoalBundle(id);
   if (!bundle) notFound();
 
   const today = todayISO(profile.timezone);

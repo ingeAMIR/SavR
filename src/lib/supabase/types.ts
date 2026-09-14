@@ -7,6 +7,7 @@ export type GoalStatus = "active" | "paused" | "completed" | "archived";
 export type SurplusMode = "buffer" | "accelerate";
 export type MemberRole = "owner" | "collaborator";
 export type ContributionKind = "manual" | "daily" | "global" | "micro" | "adjustment";
+export type ContributionFrequency = "daily" | "weekly" | "biweekly" | "monthly";
 
 export interface Profile {
   id: string;
@@ -32,6 +33,7 @@ export interface Goal {
   status: GoalStatus;
   surplus_mode: SurplusMode;
   rounding_step: number;
+  contribution_frequency: ContributionFrequency;
   is_shared: boolean;
   purchased_at: string | null;
   completed_at: string | null;

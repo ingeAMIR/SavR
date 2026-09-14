@@ -84,3 +84,13 @@ body {
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1) opacity(0.6);
 }
+
+/* Safari/WebKit le da a los inputs de fecha y hora un ancho mínimo interno
+   (-webkit-min-logical-width) que ignora max-width/width del contenedor y
+   hace que el control se salga de la tarjeta en pantallas angostas. */
+input[type="date"],
+input[type="time"] {
+  min-width: 0;
+  max-width: 100%;
+  -webkit-min-logical-width: 0;
+}

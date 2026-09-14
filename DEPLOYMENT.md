@@ -23,6 +23,9 @@ copia y ejecuta, uno por uno y en este orden:
 1. `0001_schema.sql`
 2. `0002_rls.sql`
 3. `0003_rpc.sql`
+4. `0004_goals_owner_fix.sql`
+5. `0005_goal_completion_trigger.sql`
+6. `0006_contribution_frequency.sql`
 
 **Opción B — CLI (recomendado si vas a seguir iterando el esquema):**
 

@@ -5,7 +5,8 @@
  */
 
 import { computeGoalState, paceLabel, type GoalState, type Milestone } from "@/lib/savings/engine";
-import type { GoalBundle, GoalStatus, SurplusMode } from "@/lib/supabase/types";
+import { periodicQuota } from "@/lib/savings/frequency";
+import type { ContributionFrequency, GoalBundle, GoalStatus, SurplusMode } from "@/lib/supabase/types";
 
 export interface MemberVM {
   userId: string;
@@ -26,6 +27,7 @@ export interface GoalVM {
   imageUrl: string | null;
   status: GoalStatus;
   surplusMode: SurplusMode;
+  contributionFrequency: ContributionFrequency;
   isShared: boolean;
   isOwner: boolean;
   ownerId: string;
@@ -47,6 +49,7 @@ export interface GoalVM {
   // lo que le toca a quien mira la pantalla
   myShareBps: number;
   myQuota: number;
+  myPeriodicQuota: number;
   myTodayCharge: number;
   myTodayCovered: boolean;
   myArrears: number;
@@ -92,6 +95,7 @@ export function toGoalVM(bundle: GoalBundle, userId: string, today: string): Goa
     imageUrl: bundle.goal.image_url,
     status: bundle.goal.status,
     surplusMode: bundle.goal.surplus_mode,
+    contributionFrequency: bundle.goal.contribution_frequency,
     isShared: bundle.members.length > 1,
     isOwner: bundle.goal.owner_id === userId,
     ownerId: bundle.goal.owner_id,
@@ -112,6 +116,7 @@ export function toGoalVM(bundle: GoalBundle, userId: string, today: string): Goa
 
     myShareBps: bundle.members.find((m) => m.user_id === userId)?.share_bps ?? 10000,
     myQuota: mine?.dailyQuota ?? 0,
+    myPeriodicQuota: periodicQuota(mine?.dailyQuota ?? 0, bundle.goal.contribution_frequency),
     myTodayCharge: mine?.todayCharge ?? 0,
     myTodayCovered: mine?.todayCovered ?? true,
     myArrears: mine?.arrears ?? 0,

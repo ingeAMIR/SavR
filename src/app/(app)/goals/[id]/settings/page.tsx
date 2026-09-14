@@ -13,10 +13,8 @@ export default async function GoalSettingsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const profile = await getProfile();
+  const [profile, bundle] = await Promise.all([getProfile(), getGoalBundle(id)]);
   if (!profile) redirect("/login");
-
-  const bundle = await getGoalBundle(id);
   if (!bundle) notFound();
 
   const goal = toGoalVM(bundle, profile.id, todayISO(profile.timezone));

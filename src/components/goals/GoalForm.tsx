@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { CoverPicker } from "./CoverPicker";
@@ -9,10 +9,19 @@ import { createGoal, updateGoal } from "@/lib/actions/goals";
 import { formatMoney, parseMoney } from "@/lib/savings/money";
 import { addDays, inclusiveDays, todayISO } from "@/lib/savings/dates";
 import { dailyQuotaFor, suggestRounding } from "@/lib/savings/engine";
+import { CONTRIBUTION_FREQUENCIES, periodicQuota } from "@/lib/savings/frequency";
 import type { GoalVM } from "@/lib/data/viewmodel";
-import type { SurplusMode } from "@/lib/supabase/types";
+import type { ContributionFrequency, SurplusMode } from "@/lib/supabase/types";
 
 const PRESET_MONTHS = [1, 3, 6, 12];
+
+const NAME_PLACEHOLDERS = [
+  "Audífonos inalámbricos",
+  "Tenis nuevos",
+  "Un fin de semana fuera",
+  "Laptop para el trabajo",
+  "Consola de videojuegos",
+];
 
 export function GoalForm({
   userId,
@@ -32,8 +41,15 @@ export function GoalForm({
   const [dueDate, setDueDate] = useState(goal?.dueDate ?? addDays(todayISO(), 30));
   const [imageUrl, setImageUrl] = useState<string | null>(goal?.imageUrl ?? null);
   const [mode, setMode] = useState<SurplusMode>(goal?.surplusMode ?? "buffer");
+  const [frequency, setFrequency] = useState<ContributionFrequency>(
+    goal?.contributionFrequency ?? "daily",
+  );
   const [roundingStep, setRoundingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [namePlaceholder, setNamePlaceholder] = useState(NAME_PLACEHOLDERS[0]);
+  useEffect(() => {
+    setNamePlaceholder(NAME_PLACEHOLDERS[Math.floor(Math.random() * NAME_PLACEHOLDERS.length)]);
+  }, []);
 
   const today = todayISO();
   const startDate = goal?.startDate ?? today;
@@ -71,6 +87,7 @@ export function GoalForm({
             image_url: imageUrl,
             surplus_mode: mode,
             rounding_step: roundingStep,
+            contribution_frequency: frequency,
           })
         : await createGoal({
             name,
@@ -79,6 +96,7 @@ export function GoalForm({
             imageUrl,
             surplusMode: mode,
             roundingStep,
+            contributionFrequency: frequency,
           });
 
       if (!res.ok) return setError(res.error ?? "No se pudo guardar.");
@@ -94,7 +112,7 @@ export function GoalForm({
       <Field label="¿Qué quieres?">
         <input
           className={inputClass}
-          placeholder="Playera del América"
+          placeholder={namePlaceholder}
           value={name}
           maxLength={80}
           onChange={(e) => setName(e.target.value)}
@@ -145,6 +163,12 @@ export function GoalForm({
           <p className="text-xs text-ink-400">
             {preview.days} días · {formatMoney(target, currency)} en total
           </p>
+          {frequency !== "daily" && (
+            <p className="text-xs text-ink-400">
+              ≈ {formatMoney(periodicQuota(preview.quota, frequency), currency)}{" "}
+              {CONTRIBUTION_FREQUENCIES.find((f) => f.value === frequency)?.label.toLowerCase()}
+            </p>
+          )}
 
           {preview.suggestion && (
             <button
@@ -173,6 +197,32 @@ export function GoalForm({
           )}
         </div>
       )}
+
+      <fieldset className="space-y-2">
+        <legend className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-400">
+          ¿Cada cuánto planeas abonar?
+        </legend>
+        <div className="grid grid-cols-2 gap-2">
+          {CONTRIBUTION_FREQUENCIES.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setFrequency(f.value)}
+              aria-pressed={frequency === f.value}
+              className={`rounded-xl border px-3 py-2.5 text-sm transition active:scale-95 ${
+                frequency === f.value
+                  ? "border-mint-500 bg-mint-500/10 text-mint-300"
+                  : "border-ink-600 text-ink-200"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-ink-400">
+          Sólo ajusta cómo te lo mostramos; la cuota diaria y tu racha no cambian.
+        </p>
+      </fieldset>
 
       <fieldset className="space-y-2">
         <legend className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-400">

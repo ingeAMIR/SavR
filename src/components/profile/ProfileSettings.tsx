@@ -53,7 +53,7 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
       >
         <input
           type="time"
-          className={inputClass}
+          className={`${inputClass} min-w-0`}
           value={reminderTime}
           onChange={(e) => {
             setReminderTime(e.target.value);

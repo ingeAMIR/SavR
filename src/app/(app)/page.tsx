@@ -10,11 +10,13 @@ import { PromoteWishlistPrompt } from "@/components/home/PromoteWishlistPrompt";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const profile = await getProfile();
+  const [profile, bundles] = await Promise.all([
+    getProfile(),
+    getGoalBundles(["active", "paused", "completed"]),
+  ]);
   if (!profile) return null;
 
   const today = todayISO(profile.timezone);
-  const bundles = await getGoalBundles(["active", "paused", "completed"]);
 
   const entries = bundles.map((b) => ({
     goal: toGoalVM(b, profile.id, today),
